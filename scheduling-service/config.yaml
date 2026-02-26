@@ -1,0 +1,5 @@
+rules:
+  min_day_off_per_week: 1
+  max_day_off_per_week: 2
+  no_morning_after_evening: true
+  max_daily_shift_diff: 1

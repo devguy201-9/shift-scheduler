@@ -1,0 +1,26 @@
+[package]
+name = "data_service"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.sqlx]
+offline = true
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx.workspace = true
+uuid = { version = "1", features = ["v4", "serde"] }
+redis = { version = "0.24", features = ["tokio-comp"] }
+dotenvy = "0.15"
+utoipa = { version = "4", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "6", features = ["axum"] }
+async-trait = "0.1.83"
+shared = { path = "../shared" }
+thiserror = "1.0.69"
+
+[dev-dependencies]
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["macros"] }

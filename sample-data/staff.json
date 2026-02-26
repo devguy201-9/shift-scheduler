@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "name": "Thuan Tran",
+      "email": "thuantran@example.com",
+      "position": "Developer"
+    },
+    {
+      "name": "Tran Thuan",
+      "email": "tranthuan@example.com",
+      "position": "QA"
+    }
+  ]
+}

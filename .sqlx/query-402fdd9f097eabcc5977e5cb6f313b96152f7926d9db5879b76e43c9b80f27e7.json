@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO staff (id, name, email, position, status)\n             VALUES ($1, $2, $3, $4, $5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "staff_status",
+            "kind": {
+              "Enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "402fdd9f097eabcc5977e5cb6f313b96152f7926d9db5879b76e43c9b80f27e7"
+}

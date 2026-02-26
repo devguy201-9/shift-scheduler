@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT status as \"status: JobStatus\"\n        FROM schedule_jobs\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status: JobStatus",
+        "type_info": {
+          "Custom": {
+            "name": "job_status",
+            "kind": {
+              "Enum": [
+                "PENDING",
+                "PROCESSING",
+                "COMPLETED",
+                "FAILED"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0943044d0f7ee5db10019ec7d7a5bd9460df030cc7574677c5527abcc1a5477e"
+}

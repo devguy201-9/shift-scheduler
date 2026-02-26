@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE schedule_jobs\n            SET status = $2,\n                updated_at = now()\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "job_status",
+            "kind": {
+              "Enum": [
+                "PENDING",
+                "PROCESSING",
+                "COMPLETED",
+                "FAILED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9dd76ef516938bc06dd5a7d16edbb4c6b9a4ca883fcc356d4a9f8a248c787909"
+}
