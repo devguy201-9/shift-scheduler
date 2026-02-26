@@ -12,5 +12,6 @@ sqlx = { version = "0.7.3", features = [
     "macros",
     "uuid",
     "chrono",
-    "runtime-tokio"
+    "runtime-tokio",
+    "offline"
 ] }

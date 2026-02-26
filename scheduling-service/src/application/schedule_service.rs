@@ -7,7 +7,7 @@ use crate::domain::rules::{
     no_morning_after_evening::NoMorningAfterEvening,
     rule_engine::{RuleContext, RuleEngine},
 };
-use crate::domain::schedule::ShiftAssignment;
+use crate::domain::schedule::{ScheduleJob, ShiftAssignment};
 use chrono::{Duration, NaiveDate};
 use shared::types::{JobStatus, ShiftType};
 use std::sync::Arc;
@@ -54,9 +54,7 @@ impl ScheduleService {
             None => return Ok(()),
         };
 
-        self.repo.mark_processing(job.id).await?;
-
-        match self.process_job(job.clone()).await {
+        match self.process_job(&job).await {
             Ok(_) => self.repo.mark_completed(job.id).await?,
             Err(e) => {
                 self.repo.mark_failed(job.id, &e.to_string()).await?;
@@ -66,13 +64,13 @@ impl ScheduleService {
         Ok(())
     }
 
-    async fn process_job(&self, job: crate::domain::schedule::ScheduleJob) -> anyhow::Result<()> {
+    async fn process_job(&self, job: &ScheduleJob) -> anyhow::Result<()> {
         let staff_ids = self
             .data_client
             .get_group_members(job.staff_group_id)
             .await?;
 
-        let assignments = Self::generate_schedule(staff_ids, job.period_begin_date, &self.config)?;
+        let assignments = self.generate_schedule(staff_ids, job.period_begin_date)?;
 
         self.repo.save_assignments(job.id, assignments).await?;
 
@@ -80,9 +78,9 @@ impl ScheduleService {
     }
 
     fn generate_schedule(
+        &self,
         staff_ids: Vec<Uuid>,
         start_date: NaiveDate,
-        config: &RuleConfig,
     ) -> anyhow::Result<Vec<ShiftAssignment>> {
         if staff_ids.is_empty() {
             return Ok(vec![]);
@@ -111,15 +109,15 @@ impl ScheduleService {
 
         let engine = RuleEngine::new(vec![
             Box::new(NoMorningAfterEvening {
-                is_enabled: config.no_morning_after_evening,
+                is_enabled: self.config.no_morning_after_evening,
             }),
             Box::new(DayOffRule {
-                min: config.min_day_off_per_week,
-                max: config.max_day_off_per_week,
+                min: self.config.min_day_off_per_week,
+                max: self.config.max_day_off_per_week,
                 is_enabled: true,
             }),
             Box::new(BalanceRule {
-                max_diff: config.max_daily_shift_diff,
+                max_diff: self.config.max_daily_shift_diff,
                 is_enabled: true,
             }),
         ]);
@@ -129,13 +127,13 @@ impl ScheduleService {
         };
 
         engine.validate(&ctx).map_err(|violations| {
-            anyhow::anyhow!(
-                violations
-                    .into_iter()
-                    .map(|v| format!("[{}] {}", v.rule, v.message))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
+            let message = violations
+                .into_iter()
+                .map(|v| format!("[{}] {}", v.rule, v.message))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            anyhow::anyhow!(message)
         })?;
 
         Ok(assignments)
@@ -148,5 +146,9 @@ impl ScheduleService {
 
     pub async fn get_result(&self, id: Uuid) -> anyhow::Result<Vec<ShiftAssignment>> {
         self.repo.get_result(id).await
+    }
+
+    pub async fn get_job(&self, id: Uuid) -> anyhow::Result<Option<ScheduleJob>> {
+        self.repo.find_by_id(id).await
     }
 }

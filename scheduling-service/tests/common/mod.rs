@@ -1,4 +1,4 @@
-use axum::{async_trait, Router};
+use axum::{Router, async_trait};
 use chrono::NaiveDate;
 use mockall::mock;
 use scheduling_service::application::data_client_trait::DataClient;
@@ -27,6 +27,7 @@ mock! {
         async fn save_assignments(&self, job_id: Uuid, assignments: Vec<ShiftAssignment>) -> anyhow::Result<()>;
         async fn get_status(&self, id: Uuid) -> anyhow::Result<Option<JobStatus>>;
         async fn get_result(&self, id: Uuid) -> anyhow::Result<Vec<ShiftAssignment>>;
+        async fn find_by_id(&self, id: Uuid) -> anyhow::Result<Option<ScheduleJob>>;
     }
 }
 
@@ -40,8 +41,27 @@ mock! {
 }
 
 pub async fn build_test_app() -> Router {
-    let repo = Arc::new(MockRepo::new());
+    let mut repo = Arc::new(MockRepo::new());
     let client = Arc::new(MockClient::new());
+
+    repo.expect_insert_job().returning(|_, _, _| Ok(()));
+
+    repo.expect_get_status()
+        .returning(|_| Ok(Some(JobStatus::Pending)));
+
+    repo.expect_get_result().returning(|_| Ok(vec![]));
+
+    repo.expect_find_by_id().returning(|id| {
+        Ok(Some(ScheduleJob {
+            id,
+            staff_group_id: Uuid::new_v4(),
+            period_begin_date: NaiveDate::from_ymd_opt(2025, 1, 6).unwrap(),
+            status: JobStatus::Pending,
+            error_message: None,
+            created_at: None,
+            updated_at: None,
+        }))
+    });
 
     let config = RuleConfig {
         min_day_off_per_week: 1,
@@ -50,9 +70,15 @@ pub async fn build_test_app() -> Router {
         max_daily_shift_diff: 2,
     };
 
-    let schedule_service = Arc::new(ScheduleService::new(repo, client, config));
+    let service = Arc::new(ScheduleService::new(
+        Arc::new(repo),
+        Arc::new(client),
+        config,
+    ));
 
-    let state = AppState { schedule_service };
+    let state = AppState {
+        schedule_service: service,
+    };
 
     Router::new()
         .route("/api/v1/schedules", axum::routing::post(create_schedule))

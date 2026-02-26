@@ -207,4 +207,34 @@ impl ScheduleRepository for ScheduleRepositoryPg {
 
         Ok(assignments)
     }
+
+    async fn find_by_id(&self, id: Uuid) -> anyhow::Result<Option<ScheduleJob>> {
+        let row = sqlx::query!(
+            r#"
+        SELECT
+            id,
+            staff_group_id,
+            period_begin_date,
+            status as "status: JobStatus",
+            error_message,
+            created_at,
+            updated_at
+        FROM schedule_jobs
+        WHERE id = $1
+        "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(row.map(|r| ScheduleJob {
+            id: r.id,
+            staff_group_id: r.staff_group_id,
+            period_begin_date: r.period_begin_date,
+            status: r.status,
+            error_message: r.error_message,
+            created_at: Some(r.created_at),
+            updated_at: Some(r.updated_at),
+        }))
+    }
 }

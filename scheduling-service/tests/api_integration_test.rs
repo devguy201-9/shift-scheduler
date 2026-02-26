@@ -25,5 +25,27 @@ async fn create_schedule_endpoint() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+}
+
+#[tokio::test]
+async fn create_schedule_rejects_non_monday() {
+    let app = build_test_app().await;
+
+    let payload = json!({
+        "staff_group_id": Uuid::new_v4(),
+        "period_begin_date": "2025-01-01"
+    });
+
+    let response = app
+        .oneshot(
+            Request::post("/api/v1/schedules")
+                .header("content-type", "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }

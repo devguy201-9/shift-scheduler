@@ -28,4 +28,8 @@ pub trait ScheduleRepository: Send + Sync {
     async fn get_status(&self, id: Uuid) -> anyhow::Result<Option<JobStatus>>;
 
     async fn get_result(&self, id: Uuid) -> anyhow::Result<Vec<ShiftAssignment>>;
+    async fn find_by_id(
+        &self,
+        id: Uuid,
+    ) -> anyhow::Result<Option<ScheduleJob>>;
 }
