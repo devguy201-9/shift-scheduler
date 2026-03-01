@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "name": "Engineering",
+      "parent_group_id": null
+    },
+    {
+      "name": "Backend",
+      "parent_group_id": null
+    }
+  ]
+}

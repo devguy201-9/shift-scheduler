@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH RECURSIVE subgroups AS (\n                SELECT id FROM staff_groups WHERE id = $1\n                UNION\n                SELECT sg.id\n                FROM staff_groups sg\n                JOIN subgroups s ON sg.parent_group_id = s.id\n            )\n            SELECT s.id, s.name, s.email, s.position,\n                   s.status as \"status: StaffStatus\"\n            FROM staff s\n            JOIN group_memberships gm ON gm.staff_id = s.id\n            JOIN subgroups sg ON sg.id = gm.group_id\n            WHERE s.status = 'ACTIVE'\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "position",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "status: StaffStatus",
+        "type_info": {
+          "Custom": {
+            "name": "staff_status",
+            "kind": {
+              "Enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "cdbef0a6a6916fb26efd06d3e753a3b6682893931939a0a5fb6b5f80ad6c3bd5"
+}

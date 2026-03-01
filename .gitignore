@@ -1,0 +1,17 @@
+# Rust
+target/
+
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.env.docker
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

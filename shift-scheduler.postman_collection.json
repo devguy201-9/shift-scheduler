@@ -1,0 +1,517 @@
+{
+  "info": {
+    "name": "Shift Scheduling - Full E2E",
+    "_postman_id": "shift-scheduling-e2e",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Group Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          },
+          "raw": "{ \"items\": [ { \"name\": \"Engineering-Auto\", \"parent_group_id\": null }, { \"name\": \"Engineering-Test\", \"parent_group_id\": null }] }"
+        },
+        "url": "{{DATA_SERVICE_URL}}/api/v1/groups/batch"
+      }
+    },
+    {
+      "name": "Create Staff Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          },
+          "raw": "{ \"items\": [ {\"name\":\"Alice\",\"email\":\"alice_auto@example.com\",\"position\":\"Dev\"}, {\"name\":\"Bob\",\"email\":\"bob_auto@example.com\",\"position\":\"Dev\"}, {\"name\":\"Charlie\",\"email\":\"charlie_auto@example.com\",\"position\":\"Dev\"}, {\"name\":\"David\",\"email\":\"david_auto@example.com\",\"position\":\"Dev\"} ] }"
+        },
+        "url": "{{DATA_SERVICE_URL}}/api/v1/staff/batch"
+      }
+    },
+    {
+      "name": "Add All Staff to Group",
+      "request": {
+        "method": "POST",
+        "url": "{{DATA_SERVICE_URL}}/api/v1/groups/{{group_id_1_staff}}/members/{{staff_id}}"
+      }
+    },
+    {
+      "name": "Get Resolved Members",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{DATA_SERVICE_URL}}/api/v1/groups/{{group_id_1_staff}}/resolved-members",
+          "host": [
+            "{{DATA_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "groups",
+            "{{group_id_1_staff}}",
+            "resolved-members"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Schedule - VALID (Monday)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"staff_group_id\": \"{{group_id_1_staff}}\",\n  \"period_begin_date\": \"2025-01-06\"\n}"
+        },
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 202', function () {",
+              "  pm.response.to.have.status(202);",
+              "});",
+              "",
+              "let jsonData = pm.response.json();",
+              "pm.environment.set('schedule_id', jsonData.schedule_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Schedule Status",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/status",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules",
+            "{{schedule_id}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Schedule Result",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/result",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules",
+            "{{schedule_id}}",
+            "result"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Schedule - INVALID (Not Monday)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"staff_group_id\": \"{{group_id_1_staff}}\",\n  \"period_begin_date\": \"2025-01-07\"\n}"
+        },
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Status - NOT FOUND",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/00000000-0000-0000-0000-000000000000/status",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules",
+            "00000000-0000-0000-0000-000000000000",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Result - NOT FOUND",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/00000000-0000-0000-0000-000000000000/result",
+          "host": [
+            "{{SCHEDULING_SERVICE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "schedules",
+            "00000000-0000-0000-0000-000000000000",
+            "result"
+          ]
+        }
+      }
+    },
+    {
+      "name": "VALID ASSIGNMENT (1 STAFF, 1 WEEK)",
+      "item": [
+        {
+          "name": "Create Schedule - 1 Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff_group_id\": \"{{group_id_1_staff}}\",\n  \"period_begin_date\": \"2025-01-06\"\n}"
+            },
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 202', () => pm.response.to.have.status(202));",
+                  "pm.environment.set('schedule_id', pm.response.json().schedule_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Status - Should COMPLETE",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/status",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules",
+                "{{schedule_id}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should be COMPLETED', () => {",
+                  "  pm.expect(pm.response.text()).to.include('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "VALID DAILY COVERAGE (4 STAFF)",
+      "item": [
+        {
+          "name": "Create Schedule - 4 Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff_group_id\": \"{{group_id_4_staff}}\",\n  \"period_begin_date\": \"2025-02-03\"\n}"
+            },
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('schedule_id', pm.response.json().schedule_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Status - Should COMPLETE",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/status",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules",
+                "{{schedule_id}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should be COMPLETED', () => {",
+                  "  pm.expect(pm.response.text()).to.include('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "INVALID DAILY COVERAGE (BalanceRule FAIL)",
+      "item": [
+        {
+          "name": "Create Schedule - Expect FAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff_group_id\": \"{{group_id_4_staff}}\",\n  \"period_begin_date\": \"2025-03-03\"\n}"
+            },
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('schedule_id', pm.response.json().schedule_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Status - Should FAIL",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/status",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules",
+                "{{schedule_id}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should be FAILED', () => {",
+                  "  pm.expect(pm.response.text()).to.include('FAILED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "INVALID ASSIGNMENT (Morning after Evening)",
+      "item": [
+        {
+          "name": "Create Schedule - Expect FAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff_group_id\": \"{{group_id_1_staff}}\",\n  \"period_begin_date\": \"2025-04-07\"\n}"
+            },
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('schedule_id', pm.response.json().schedule_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Status - Should FAIL",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{SCHEDULING_SERVICE_URL}}/api/v1/schedules/{{schedule_id}}/status",
+              "host": [
+                "{{SCHEDULING_SERVICE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schedules",
+                "{{schedule_id}}",
+                "status"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should be FAILED', () => {",
+                  "  pm.expect(pm.response.text()).to.include('FAILED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

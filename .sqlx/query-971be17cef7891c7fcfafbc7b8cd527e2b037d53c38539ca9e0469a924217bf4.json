@@ -1,0 +1,51 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, staff_id, date, shift_type as \"shift_type: ShiftType\"\n            FROM shift_assignments\n            WHERE schedule_id = $1\n            ORDER BY date\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "staff_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 3,
+        "name": "shift_type: ShiftType",
+        "type_info": {
+          "Custom": {
+            "name": "shift_type_enum",
+            "kind": {
+              "Enum": [
+                "MORNING",
+                "EVENING",
+                "DAY_OFF"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "971be17cef7891c7fcfafbc7b8cd527e2b037d53c38539ca9e0469a924217bf4"
+}

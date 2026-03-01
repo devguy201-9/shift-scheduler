@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "TRUNCATE group_memberships CASCADE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "b56ec06ee442b6503c747afe3e1dd4d2993ea74d30bfb368586dcc08e9c0cffe"
+}
