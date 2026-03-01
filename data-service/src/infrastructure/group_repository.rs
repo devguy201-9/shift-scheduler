@@ -1,8 +1,8 @@
 use crate::application::error::AppError;
 use crate::application::traits::GroupRepository;
 use crate::domain::{group::StaffGroup, staff::Staff};
-use shared::types::StaffStatus;
 use async_trait::async_trait;
+use shared::types::StaffStatus;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -77,7 +77,7 @@ impl GroupRepository for GroupRepositoryPg {
     }
 
     async fn remove_member(&self, group_id: Uuid, staff_id: Uuid) -> Result<(), AppError> {
-        sqlx::query!(
+        let result = sqlx::query!(
             r#"
         DELETE FROM group_memberships
         WHERE staff_id = $1 AND group_id = $2
@@ -88,6 +88,10 @@ impl GroupRepository for GroupRepositoryPg {
         .execute(&self.pool)
         .await
         .map_err(AppError::from)?;
+
+        if result.rows_affected() == 0 {
+            return Err(AppError::NotFound("Membership not found".into()));
+        }
 
         Ok(())
     }
@@ -110,7 +114,7 @@ impl GroupRepository for GroupRepositoryPg {
         .map_err(AppError::from)?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound("Group not found".into()));
         }
 
         Ok(())
@@ -123,7 +127,7 @@ impl GroupRepository for GroupRepositoryPg {
             .map_err(AppError::from)?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound("Group not found".into()));
         }
 
         Ok(())
@@ -143,11 +147,49 @@ impl GroupRepository for GroupRepositoryPg {
                 group.parent_group_id
             )
             .execute(&mut *tx)
-            .await?;
+            .await
+            .map_err(AppError::from)?;
         }
 
         tx.commit().await?;
 
         Ok(())
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<StaffGroup>, AppError> {
+        let group = sqlx::query_as!(
+            StaffGroup,
+            r#"
+        SELECT id, name, parent_group_id
+        FROM staff_groups
+        WHERE id = $1
+        "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::from)?;
+
+        Ok(group)
+    }
+
+    async fn is_member(&self, group_id: Uuid, staff_id: Uuid) -> Result<bool, AppError> {
+        let row = sqlx::query!(
+            r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM group_memberships
+            WHERE group_id = $1
+              AND staff_id = $2
+        ) as "exists!"
+        "#,
+            group_id,
+            staff_id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::from)?;
+
+        Ok(row.exists)
     }
 }

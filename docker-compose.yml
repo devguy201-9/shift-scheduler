@@ -26,8 +26,8 @@ services:
     depends_on:
       postgres:
           condition: service_healthy
-    env_file:
-      - .env
+    environment:
+      APP_ENV: docker
     ports:
       - "8080:8080"
 
@@ -40,8 +40,8 @@ services:
         condition: service_healthy
       data-service:
         condition: service_started
-    env_file:
-      - .env
+    environment:
+      APP_ENV: docker
     volumes:
       - ./scheduling-service/config.yaml:/app/config.yaml
     ports:

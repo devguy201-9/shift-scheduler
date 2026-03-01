@@ -6,7 +6,7 @@ target/
 .vscode/
 
 # Environment
-.env
+.env.docker
 .env.*
 
 # OS

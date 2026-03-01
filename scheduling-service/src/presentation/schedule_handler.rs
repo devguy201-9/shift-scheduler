@@ -1,10 +1,10 @@
 use crate::app_state::AppState;
 use crate::application::api_error::ScheduleApiError;
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use axum::{
-    extract::{Path, State},
     Json,
+    extract::{Path, State},
 };
 use chrono::Datelike;
 use chrono::NaiveDate;
@@ -18,7 +18,7 @@ pub struct CreateScheduleRequest {
     pub period_begin_date: NaiveDate,
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct CreateScheduleResponse {
     pub schedule_id: Uuid,
     pub status: String,
@@ -55,7 +55,7 @@ pub struct AssignmentResponse {
 pub async fn create_schedule(
     State(state): State<AppState>,
     Json(req): Json<CreateScheduleRequest>,
-) -> Result<impl IntoResponse, ScheduleApiError> {
+) -> Result<Response, ScheduleApiError> {
     //must be Monday
     if req.period_begin_date.weekday().number_from_monday() != 1 {
         return Err(ScheduleApiError::Validation(
@@ -67,15 +67,17 @@ pub async fn create_schedule(
         .schedule_service
         .create_job(req.staff_group_id, req.period_begin_date)
         .await
-        .map_err(|_| ScheduleApiError::Internal)?;
+        .map_err(|e| ScheduleApiError::Internal(e.to_string()))?;
 
-    Ok((
-        StatusCode::ACCEPTED,
-        Json(CreateScheduleResponse {
-            schedule_id: job_id,
-            status: "PENDING".into(),
-        }),
-    ))
+    let mut res = Json(CreateScheduleResponse {
+        schedule_id: job_id,
+        status: "PENDING".into(),
+    })
+    .into_response();
+
+    *res.status_mut() = StatusCode::ACCEPTED;
+
+    Ok(res)
 }
 
 // GET /api/v1/schedules/:id/status
@@ -100,7 +102,7 @@ pub async fn get_status(
         .schedule_service
         .get_status(id)
         .await
-        .map_err(|_| ScheduleApiError::Internal)?;
+        .map_err(|e| ScheduleApiError::Internal(e.to_string()))?;
 
     match status {
         Some(s) => Ok(Json(s.as_str().to_string())),
@@ -130,14 +132,14 @@ pub async fn get_result(
         .schedule_service
         .get_job(id)
         .await
-        .map_err(|_| ScheduleApiError::Internal)?
+        .map_err(|e| ScheduleApiError::Internal(e.to_string()))?
         .ok_or(ScheduleApiError::NotFound)?;
 
     let assignments = state
         .schedule_service
         .get_result(id)
         .await
-        .map_err(|_| ScheduleApiError::Internal)?;
+        .map_err(|e| ScheduleApiError::Internal(e.to_string()))?;
 
     let mapped = assignments
         .into_iter()

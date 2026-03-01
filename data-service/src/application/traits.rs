@@ -11,6 +11,7 @@ pub trait StaffRepository: Send + Sync {
     async fn update(&self, staff: Staff) -> Result<(), AppError>;
     async fn delete(&self, id: Uuid) -> Result<(), AppError>;
     async fn create_batch(&self, staff: Vec<Staff>) -> Result<(), AppError>;
+    async fn exists_by_email(&self, email: &str) -> Result<bool, AppError>;
 }
 
 #[async_trait]
@@ -22,4 +23,6 @@ pub trait GroupRepository: Send + Sync {
     async fn update(&self, group: StaffGroup) -> Result<(), AppError>;
     async fn delete(&self, id: Uuid) -> Result<(), AppError>;
     async fn create_batch(&self, groups: Vec<StaffGroup>) -> Result<(), AppError>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<StaffGroup>, AppError>;
+    async fn is_member(&self, group_id: Uuid, staff_id: Uuid) -> Result<bool, AppError>;
 }

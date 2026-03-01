@@ -12,8 +12,8 @@ pub enum ScheduleApiError {
     #[error("Validation error: {0}")]
     Validation(String),
 
-    #[error("Internal server error")]
-    Internal,
+    #[error("Internal server error: {0}")]
+    Internal(String),
 }
 
 impl IntoResponse for ScheduleApiError {
@@ -23,7 +23,7 @@ impl IntoResponse for ScheduleApiError {
 
             ScheduleApiError::Validation(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
 
-            ScheduleApiError::Internal => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            ScheduleApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg).into_response(),
         }
     }
 }

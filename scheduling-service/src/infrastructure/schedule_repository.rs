@@ -75,6 +75,7 @@ impl ScheduleRepository for ScheduleRepositoryPg {
     async fn fetch_pending(&self) -> anyhow::Result<Option<ScheduleJob>> {
         let mut tx = self.pool.begin().await?;
 
+        // fetch_pending: SELECT must run on `tx` so FOR UPDATE SKIP LOCKED holds the row until set status=PROCESSING and commit.
         let row = sqlx::query!(
             r#"
             SELECT id, staff_group_id, period_begin_date, status as "status: JobStatus",
@@ -86,7 +87,7 @@ impl ScheduleRepository for ScheduleRepositoryPg {
             LIMIT 1
             "#
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
 
         let job = if let Some(r) = row {
@@ -156,7 +157,7 @@ impl ScheduleRepository for ScheduleRepositoryPg {
                 .push_bind(job_id)
                 .push_bind(a.staff_id)
                 .push_bind(a.date)
-                .push_bind(a.shift.to_string());
+                .push_bind(a.shift.clone() as ShiftType);
         });
 
         builder.build().execute(&mut *tx).await?;

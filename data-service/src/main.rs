@@ -1,13 +1,13 @@
 use data_service::app_state::AppState;
-use data_service::build_app;
 use data_service::infrastructure::cache::RedisCache;
 use data_service::infrastructure::db::init_pool;
-use tokio::net::TcpListener;
+use data_service::{build_app, load_env};
 use sqlx::migrate;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().ok();
+    _ = load_env();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 

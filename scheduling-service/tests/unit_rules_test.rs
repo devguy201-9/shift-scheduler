@@ -10,7 +10,7 @@ use uuid::Uuid;
 #[test]
 fn balance_rule_detects_imbalance() {
     let staff_id = Uuid::new_v4();
-    let date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+    let date = NaiveDate::from_ymd_opt(2025, 1, 1).expect("invalid static test date");
 
     let assignments = vec![
         ShiftAssignment {
@@ -41,7 +41,7 @@ fn balance_rule_detects_imbalance() {
 #[test]
 fn day_off_rule_detects_invalid_range() {
     let staff_id = Uuid::new_v4();
-    let date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+    let date = NaiveDate::from_ymd_opt(2025, 1, 1).expect("invalid static test date");
 
     let assignments = vec![ShiftAssignment {
         id: Uuid::new_v4(),
@@ -73,13 +73,13 @@ fn no_morning_after_evening_detects_violation() {
         ShiftAssignment {
             id: Uuid::new_v4(),
             staff_id: staff,
-            date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 1).expect("invalid static test date"),
             shift: ShiftType::Evening,
         },
         ShiftAssignment {
             id: Uuid::new_v4(),
             staff_id: staff,
-            date: NaiveDate::from_ymd_opt(2025, 1, 2).unwrap(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 2).expect("invalid static test date"),
             shift: ShiftType::Morning,
         },
     ];

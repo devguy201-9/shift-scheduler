@@ -1,4 +1,4 @@
 target
 .git
-.env
+.env.docker
 node_modules

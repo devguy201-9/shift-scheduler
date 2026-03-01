@@ -21,6 +21,7 @@ async-trait = "0.1.83"
 shared = { path = "../shared" }
 thiserror = "1.0.69"
 tower = "0.5.3"
+tracing = "0.1.44"
 
 [dev-dependencies]
 reqwest = { version = "0.11", features = ["json"] }

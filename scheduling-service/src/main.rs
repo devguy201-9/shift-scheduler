@@ -4,13 +4,13 @@ use scheduling_service::infrastructure::db::init_pool;
 use scheduling_service::infrastructure::http_data_client::HttpDataClient;
 use scheduling_service::infrastructure::schedule_repository::ScheduleRepositoryPg;
 use scheduling_service::worker::start_worker;
-use scheduling_service::{build_app, load_config};
+use scheduling_service::{build_app, load_config, load_env};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().ok();
+    _ = load_env();
     let config = load_config();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");

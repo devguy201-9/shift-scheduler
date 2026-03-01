@@ -1,4 +1,4 @@
-use axum::{Router, async_trait};
+use axum::{async_trait, Router};
 use chrono::NaiveDate;
 use mockall::mock;
 use scheduling_service::application::data_client_trait::DataClient;
@@ -40,9 +40,19 @@ mock! {
     }
 }
 
+pub fn default_test_config() -> RuleConfig {
+    RuleConfig {
+        min_day_off_per_week: 1,
+        max_day_off_per_week: 3,
+        no_morning_after_evening: true,
+        max_daily_shift_diff: 2,
+    }
+}
+
+#[allow(dead_code)]
 pub async fn build_test_app() -> Router {
-    let mut repo = Arc::new(MockRepo::new());
-    let client = Arc::new(MockClient::new());
+    let mut repo = MockRepo::new();
+    let client = MockClient::new();
 
     repo.expect_insert_job().returning(|_, _, _| Ok(()));
 
@@ -55,7 +65,8 @@ pub async fn build_test_app() -> Router {
         Ok(Some(ScheduleJob {
             id,
             staff_group_id: Uuid::new_v4(),
-            period_begin_date: NaiveDate::from_ymd_opt(2025, 1, 6).unwrap(),
+            period_begin_date: NaiveDate::from_ymd_opt(2025, 1, 6)
+                .expect("invalid static test date"),
             status: JobStatus::Pending,
             error_message: None,
             created_at: None,
@@ -63,12 +74,7 @@ pub async fn build_test_app() -> Router {
         }))
     });
 
-    let config = RuleConfig {
-        min_day_off_per_week: 1,
-        max_day_off_per_week: 3,
-        no_morning_after_evening: true,
-        max_daily_shift_diff: 2,
-    };
+    let config = default_test_config();
 
     let service = Arc::new(ScheduleService::new(
         Arc::new(repo),

@@ -360,6 +360,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tower",
+ "tracing",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",

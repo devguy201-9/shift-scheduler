@@ -12,7 +12,7 @@ async fn create_schedule_endpoint() {
 
     let payload = json!({
         "staff_group_id": Uuid::new_v4(),
-        "period_begin_date": "2025-01-01"
+        "period_begin_date": "2025-01-06"
     });
 
     let response = app
@@ -20,10 +20,10 @@ async fn create_schedule_endpoint() {
             Request::post("/api/v1/schedules")
                 .header("content-type", "application/json")
                 .body(Body::from(payload.to_string()))
-                .unwrap(),
+                .expect("failed to build create-schedule request"),
         )
         .await
-        .unwrap();
+        .expect("create-schedule request failed");
 
     assert_eq!(response.status(), StatusCode::ACCEPTED);
 }
@@ -42,10 +42,10 @@ async fn create_schedule_rejects_non_monday() {
             Request::post("/api/v1/schedules")
                 .header("content-type", "application/json")
                 .body(Body::from(payload.to_string()))
-                .unwrap(),
+                .expect("failed to build create-schedule request"),
         )
         .await
-        .unwrap();
+        .expect("create-schedule request failed");
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }

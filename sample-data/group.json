@@ -6,7 +6,7 @@
     },
     {
       "name": "Backend",
-      "parent_group_id": "ENGINEERING_ID"
+      "parent_group_id": null
     }
   ]
 }

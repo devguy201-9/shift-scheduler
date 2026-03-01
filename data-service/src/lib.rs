@@ -3,6 +3,7 @@ use crate::presentation::api_swagger::ApiDoc;
 use crate::presentation::{group_handler::*, staff_handler::*};
 use axum::Router;
 use axum::routing::{delete, get, post, put};
+use std::env;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -39,4 +40,16 @@ fn api_v1_routes() -> Router<AppState> {
         .route("/groups/:id", put(update_group))
         .route("/groups/:id", delete(delete_group))
         .route("/groups/batch", post(batch_create_group))
+}
+
+pub fn load_env() {
+    let env = env::var("APP_ENV").unwrap_or_else(|_| "local".into());
+
+    let filename = match env.as_str() {
+        "docker" => ".env.docker",
+        "test" => ".env.test",
+        _ => ".env.local",
+    };
+
+    dotenvy::from_filename(filename).ok();
 }

@@ -8,8 +8,9 @@ use crate::domain::rules::{
     rule_engine::{RuleContext, RuleEngine},
 };
 use crate::domain::schedule::{ScheduleJob, ShiftAssignment};
-use chrono::{Duration, NaiveDate};
+use chrono::{Datelike, NaiveDate};
 use shared::types::{JobStatus, ShiftType};
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -54,6 +55,8 @@ impl ScheduleService {
             None => return Ok(()),
         };
 
+        self.repo.mark_processing(job.id).await?;
+
         match self.process_job(&job).await {
             Ok(_) => self.repo.mark_completed(job.id).await?,
             Err(e) => {
@@ -86,17 +89,52 @@ impl ScheduleService {
             return Ok(vec![]);
         }
 
-        let mut assignments = vec![];
+        let total_days = 28;
+        let mut assignments = Vec::with_capacity(total_days * staff_ids.len());
 
-        for (staff_index, staff_id) in staff_ids.iter().enumerate() {
-            for day in 0..28 {
-                let date = start_date + Duration::days(day);
+        let mut last_shift: HashMap<Uuid, ShiftType> = HashMap::new();
+        let mut weekly_day_off: HashMap<(Uuid, i32), i32> = HashMap::new();
 
-                let shift = match (day + staff_index as i64) % 3 {
-                    0 => ShiftType::Morning,
-                    1 => ShiftType::Evening,
-                    _ => ShiftType::DayOff,
+        let staff_len = staff_ids.len();
+
+        for day in 0..total_days {
+            let date = start_date + chrono::Duration::days(day as i64);
+            let week = day / 7;
+            let weekday = date.weekday().number_from_monday() as i32;
+
+            let mut morning_count = 0;
+            let mut evening_count = 0;
+
+            for i in 0..staff_len {
+                let staff_id = &staff_ids[(i + day) % staff_len];
+                let key = (*staff_id, week as i32);
+                let day_off_count = weekly_day_off.get(&key).copied().unwrap_or(0);
+
+                let days_left = 7 - weekday;
+                let need_min = self.config.min_day_off_per_week - day_off_count;
+
+                // --- Force DayOff if necessary
+                let shift = if need_min > 0 && need_min > days_left {
+                    ShiftType::DayOff
+                } else {
+                    Self::assign_work_shift(
+                        staff_id,
+                        &mut last_shift,
+                        &mut morning_count,
+                        &mut evening_count,
+                        self.config.max_daily_shift_diff,
+                        self.config.no_morning_after_evening,
+                    )
                 };
+
+                if shift == ShiftType::DayOff {
+                    *weekly_day_off.entry(key).or_insert(0) += 1;
+
+                    // reset state after day off
+                    last_shift.remove(staff_id);
+                } else {
+                    last_shift.insert(*staff_id, shift.clone());
+                }
 
                 assignments.push(ShiftAssignment {
                     id: Uuid::new_v4(),
@@ -137,6 +175,54 @@ impl ScheduleService {
         })?;
 
         Ok(assignments)
+    }
+
+    fn assign_work_shift(
+        staff_id: &Uuid,
+        last_shift: &mut HashMap<Uuid, ShiftType>,
+        morning: &mut i32,
+        evening: &mut i32,
+        max_diff: i32,
+        no_morning_after_evening: bool,
+    ) -> ShiftType {
+        use ShiftType::*;
+
+        let prev = last_shift.get(staff_id);
+
+        // Prefer shift that keeps daily balance closer to 0
+        let prefer_morning = *morning <= *evening;
+
+        let mut candidate = if prefer_morning { Morning } else { Evening };
+
+        // Enforce rule 3
+        if no_morning_after_evening {
+            if matches!(prev, Some(Evening)) && candidate == Morning {
+                candidate = Evening;
+            }
+        }
+
+        // Final balance guard
+        match candidate {
+            Morning => {
+                if (*morning + 1 - *evening).abs() <= max_diff {
+                    *morning += 1;
+                    Morning
+                } else {
+                    *evening += 1;
+                    Evening
+                }
+            }
+            Evening => {
+                if (*evening + 1 - *morning).abs() <= max_diff {
+                    *evening += 1;
+                    Evening
+                } else {
+                    *morning += 1;
+                    Morning
+                }
+            }
+            _ => ShiftType::DayOff,
+        }
     }
 
     // For API Query

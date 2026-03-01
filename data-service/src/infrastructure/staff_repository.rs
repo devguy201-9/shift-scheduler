@@ -73,7 +73,7 @@ impl StaffRepository for StaffRepositoryPg {
         .map_err(AppError::from)?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound("Staff not found".into()));
         }
 
         Ok(())
@@ -91,7 +91,7 @@ impl StaffRepository for StaffRepositoryPg {
         .map_err(AppError::from)?;
 
         if result.rows_affected() == 0 {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound("Staff not found".into()));
         }
 
         Ok(())
@@ -120,5 +120,23 @@ impl StaffRepository for StaffRepositoryPg {
         tx.commit().await.map_err(AppError::from)?;
 
         Ok(())
+    }
+
+    async fn exists_by_email(&self, email: &str) -> Result<bool, AppError> {
+        let row = sqlx::query!(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM staff
+            WHERE email = $1
+        ) as "exists!"
+        "#,
+        email
+    )
+            .fetch_one(&self.pool)
+            .await
+            .map_err(AppError::from)?;
+
+        Ok(row.exists)
     }
 }

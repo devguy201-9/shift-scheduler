@@ -96,7 +96,7 @@ pub async fn get_staff(
         .staff_service
         .get_staff(id)
         .await?
-        .ok_or(AppError::NotFound)?;
+        .ok_or(AppError::NotFound("Staff not found".into()))?;
 
     Ok(Json(staff.into()))
 }
