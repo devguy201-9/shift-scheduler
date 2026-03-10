@@ -65,8 +65,6 @@ async fn process_next_job_success() {
     repo.expect_fetch_pending()
         .returning(move || Ok(Some(job.clone())));
 
-    repo.expect_mark_processing().returning(|_| Ok(()));
-
     repo.expect_save_assignments().returning(|_, _| Ok(()));
 
     repo.expect_mark_completed().returning(|_| Ok(()));

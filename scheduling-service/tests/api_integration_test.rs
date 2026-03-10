@@ -33,7 +33,6 @@ use serde_json::json;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-
 /*
 POST /api/v1/schedules with Monday date valid → 202 Accepted
 202 (not 201) because schedule processed ASYNC:
