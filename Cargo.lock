@@ -1787,9 +1787,12 @@ name = "scheduling_service"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum",
  "chrono",
  "dotenvy",
+ "http-body-util",
+ "hyper 1.8.1",
  "mockall",
  "reqwest",
  "serde",

@@ -19,6 +19,9 @@ dotenvy = "0.15"
 shared = { path = "../shared" }
 thiserror = "1.0.69"
 sqlx.workspace = true
+hyper = "1.8.1"
+http-body-util = "0.1"
+async-trait = "0.1.83"
 
 [dev-dependencies]
 mockall = "0.12"

@@ -55,8 +55,6 @@ impl ScheduleService {
             None => return Ok(()),
         };
 
-        self.repo.mark_processing(job.id).await?;
-
         match self.process_job(&job).await {
             Ok(_) => self.repo.mark_completed(job.id).await?,
             Err(e) => {
@@ -80,7 +78,7 @@ impl ScheduleService {
         Ok(())
     }
 
-    fn generate_schedule(
+    pub fn generate_schedule(
         &self,
         staff_ids: Vec<Uuid>,
         start_date: NaiveDate,
